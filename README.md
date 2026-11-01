@@ -55,7 +55,7 @@ git clone https://github.com/heyyanixx/nukkad-knockout.git
 cd nukkad-knockout
 npm install        # installs Vite (the only dependency)
 npm run dev        # open the local URL it prints
-npm test           # 15 automated tests (game logic + built site)
+npm test           # 14 automated tests (game logic + built site)
 npm run build      # production build into ./site
 npm run preview    # serve the build locally
 ```
