@@ -1,0 +1,16 @@
+{
+  "name": "nukkad-knockout",
+  "version": "1.0.0",
+  "description": "Nukkad Knockout - a desi meme 2D fighting game in plain HTML5 Canvas + vanilla JS (Vite). By HEYYANIXX.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
