@@ -62,10 +62,12 @@ export class Game {
     this.sounds = [];        // queued sound names, drained by the audio layer
     this.callouts = [];      // big centre/side texts
     this.onSound = null;
+    this.onEvent = null;     // renderer hook: (type, data) for 3D effects (hit sparks, supers, KO)
     this.frame = 0;
     this.startRound();
   }
 
+  emit(type, data = {}) { if (this.onEvent) this.onEvent(type, data); }
   audio(name) { this.sounds.push(name); if (this.onSound) this.onSound(name); }
   shake(n) { this.shakeAmt = Math.max(this.shakeAmt || 0, n); }
   callout(side, text, color = '#e3b65a', big = false) {
@@ -99,8 +101,9 @@ export class Game {
     this.freeze = SUPER.freeze; this.freezeBy = f;
     this.callout(f.side, 'JUGAAD!', f.char.superColor);
     this.audio('super'); this.shake(3);
+    this.emit('super', { side: f.side });
   }
-  bruh() { this.bruhT = 50; this.audio('bruh'); }
+  bruh() { this.bruhT = 50; this.audio('bruh'); this.emit('bruh'); }
 
   // ---------- one fixed 1/60 s step ----------
   step(inputs = [emptyInput(), emptyInput()]) {
@@ -117,7 +120,7 @@ export class Game {
     const [a, b] = this.f;
     this.phaseT++;
     if (this.phase === 'intro') {
-      if (this.phaseT === 62) { this.banner('LADO!', '', 40, '#ffffff'); this.audio('fight'); }
+      if (this.phaseT === 62) { this.banner('FIGHT!', 'LADO!', 40, '#ffffff'); this.audio('fight'); this.emit('fight'); }
       if (this.phaseT >= 80) { this.phase = 'fight'; a.force('idle'); b.force('idle'); }
     }
     const live = this.phase === 'fight';
@@ -223,6 +226,7 @@ export class Game {
     att.hitstop = def.hitstop = 3;
     def.stats.blocks++;
     this.fx.spark(def.x - att.facing * 18, def.y - def.height * 0.6, true);
+    this.emit('block', { x: def.x - att.facing * 18, y: def.y - def.height * 0.6, side: def.side });
     this.audio('block');
     // pinned at a wall: attacker gets pushed back instead
     if (def.x <= LEFT + HALF_W + 2 || def.x >= RIGHT - HALF_W - 2) att.pushVx = -(m.push || 6) * 0.6 * att.facing;
@@ -255,10 +259,12 @@ export class Game {
     this.fx.spark(hx, hy, false, big);
     this.shake(big ? 7 : 3);
     this.audio(big ? 'heavy' : 'hit');
+    this.emit('hit', { x: hx, y: hy, big, dmg: scaled, side: def.side, dir: att.facing, super: !!opts.superHit, combo: def.comboHits, ko: def.hp <= 0 });
+    if (scaled >= 14 && def.hp > 0) { this.audio('emo'); if (this.meme || this.frame % 2 === 0) this.fx.popup(hx, hy - 70, 'EMOTIONAL DAMAGE!', '#ff3b6b', 30); }
     if (def.comboHits >= 2) {
       const word = COMBO_WORDS[Math.min(def.comboHits, COMBO_WORDS.length - 1)];
       this.callout(att.side, def.comboHits + ' HITS ' + word, '#e3b65a');
-      if (def.comboHits === 3 || def.comboHits === 5) this.audio('crowd');
+      if (def.comboHits === 3 || def.comboHits === 5) { this.audio('crowd'); this.audio('airhorn'); }
     } else if (this.rand() < (this.meme ? 0.45 : 0.12)) {
       this.fx.popup(hx, hy - 40, MEME_WORDS[Math.floor(this.rand() * MEME_WORDS.length)], '#ffffff', 26);
     }
@@ -281,8 +287,8 @@ export class Game {
       case 'chappal': P.push({ ...base, type: 'chappal', x: f.x + dir * 50, y: f.y - 110, vx: 13 * dir, vy: 0, w: 46, h: 30, dmg: 13, kd: false, hs: 34, boomerang: true, dir }); this.audio('whoosh'); break;
       case 'headshot': P.push({ ...base, type: 'reticle', x: opp.x, y: -opp.height * 0.88, vx: 0, vy: 0, w: 70, h: 70, life: 60, dmg: 28, chip: 8, target: opp, noTouch: true }); this.audio('lock'); break;
       case 'jelly': P.push({ ...base, type: 'jelly', x: f.x + dir * 70, y: -85, vx: 5 * dir, vy: 0, w: 44, h: 170, life: 100, dmg: 17, wall: true }); this.audio('jelly'); break;
-      case 'pans': for (let i = 0; i < 3; i++) this.pending.push({ at: i * 8, p: { ...base, type: 'pan', x: 0, y: -105, vx: 12 * dir, vy: 0, w: 42, h: 42, dmg: 10, kd: i === 2, hs: 26, followOwner: true } }); this.audio('whoosh'); break;
-      case 'likes': for (let i = 0; i < 7; i++) this.pending.push({ at: i * 5, p: { ...base, type: 'like', x: 0, offset: (i - 3) * 30, y: -560, vx: 0, vy: 16, w: 44, h: 44, dmg: 5, chip: 1, kd: i === 6, hs: 22, fall: true } }); this.audio('likes'); break;
+      case 'pans': for (let i = 0; i < 3; i++) this.pending.push({ at: i * 8, p: { ...base, hits: new Set(), type: 'pan', x: 0, y: -105, vx: 12 * dir, vy: 0, w: 42, h: 42, dmg: 9, kd: i === 2, hs: 26, followOwner: true } }); this.audio('whoosh'); break;
+      case 'likes': for (let i = 0; i < 7; i++) this.pending.push({ at: i * 5, p: { ...base, hits: new Set(), type: 'like', x: 0, offset: (i - 3) * 9, y: -560, vx: 0, vy: 16, w: 52, h: 52, dmg: 4, chip: 1, kd: i === 6, hs: 22, fall: true } }); this.audio('likes'); break;
       case 'flash': {
         this.flashT = 30; this.flashColor = '#ffffff'; this.audio('flash');
         P.push({ ...base, type: 'ringlight', x: f.x + dir * 40, y: -150, vx: 0, vy: 0, w: 0, h: 0, life: 40, noTouch: true });
@@ -373,7 +379,7 @@ export class Game {
     // railway platform: a train thunders past every ~15 s (screen shake + horn)
     if (this.stage === 'platform') {
       if (this.trainT > 0) { this.trainT++; if (this.trainT < 150) this.shake(3); if (this.trainT > 190) this.trainT = 0; }
-      else if (--this.nextTrain <= 0) { this.trainT = 1; this.nextTrain = 60 * (13 + Math.floor(this.rand() * 6)); this.audio('train'); this.banner('TRAIN AAYI!', '', 50, '#ffffff'); }
+      else if (--this.nextTrain <= 0) { this.trainT = 1; this.nextTrain = 60 * (13 + Math.floor(this.rand() * 6)); this.audio('train'); this.emit('train'); this.banner('TRAIN AAYI!', '', 50, '#ffffff'); }
     }
     if (!this.events || this.phase !== 'fight') { if (this.event) this.event.t++; if (this.phase !== 'fight') WORLD.gravity = GRAVITY; return; }
     if (this.event) {
@@ -415,9 +421,10 @@ export class Game {
     this.phase = 'roundEnd'; this.phaseT = 0; this.projectiles = []; this.pending = [];
     if (kind === 'ko') {
       this.slowmo = 75; this.shake(12); this.fx.confetti(); this.audio('ko');
+      this.emit('ko', { loser: winner === null ? 0 : 1 - winner, perfect });
       this.banner('K.O.!', perfect ? 'EK DUM PERFECT!' : 'KHATAM, TATA, BYE BYE!', 160, '#e3b65a');
     } else {
-      this.audio('timeup');
+      this.audio('timeup'); this.emit('timeup');
       this.banner('TIME KHATAM!', winner === null ? 'BARABAR! DRAW' : '', 160, '#ffffff');
     }
     for (const f of this.f) if (f.hp > 0 && (f.state === 'attack' || f.state === 'airattack')) { f.attack = null; f.force(f.airborne ? 'jump' : 'idle'); }

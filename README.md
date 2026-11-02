@@ -1,96 +1,82 @@
-# NUKKAD KNOCKOUT 🥊☕
+# Nukkad Knockout 3D (v2) 🥊🔥
 
-**Desi meme street-fighting game in your browser.** Chaiwala vs Dadi vs Streamer — chappal boomerang, Auto Ram, Smash That Like.
-Made by **HEYYANIXX** · Plain HTML5 Canvas + vanilla JavaScript (Vite) · no game engine, no images, no audio files.
+**Desi meme street-fighting game — ab 3D mein.** Chaiwala vs Dadi vs Streamer, chappal boomerang, Auto Ram, slow-mo K.O. and meme-style SFX. Free, in the browser, phone + PC. By **HEYYANIXX**.
 
-▶ **Play:** https://heyyanixx-fight.sites.tab.bot
+▶ **Play:** https://heyyanixx-fight.sites.tab.bot/  ·  Classic 2D (v1): https://heyyanixx-fight.sites.tab.bot/classic/
 
-> All characters are fictional parodies; not affiliated with any real person. (Only exception: HEYY ANISH = the owner of this game 😎)
+![Title](docs/screens-v2/01-title.jpg)
+![Super](docs/screens-v2/06-super-cinematic.jpg)
+![KO](docs/screens-v2/08-ko-slowmo.jpg)
+![Phone](docs/screens-v2/22-phone-fight.jpg)
 
-![fight](docs/screens/fight.png)
+---
 
-## Features
-- **10 fighters**, each with its own stats, move names and a unique **JUGAAD** (super) move:
-  | Fighter | Group | JUGAAD super |
-  |---|---|---|
-  | Chaiwala Chhotu | Desi | Ketli Tsunami (hot chai wave) |
-  | Auto Anna | Desi | Auto Ram (rickshaw drives across the screen) |
-  | Dadi No. 1 | Desi | Chappal Boomerang (hits going AND coming back) |
-  | Headshot Hero | Battle royale | One Tap Headshot (crosshair locks on — crouch to dodge!) |
-  | Jelly Wall Jojo | Battle royale | Jelly Wall (moving wall, eats projectiles) |
-  | Loot Goblin | Battle royale | Pan-demic (3 spinning frying pans) |
-  | Streamer Sid | Creator | Smash That Like (like-buttons rain from the sky) |
-  | Vlogger Vicky | Creator | Ring Light Flash (blinds + stuns) |
-  | Carry Mintu *(parody)* | Creator | Yalgaar Scream (+ Roast Mic stun, Beep Blast) |
-  | **HEYY ANISH** *(secret boss)* | Owner | 8-3 Badla (8-hit rush) + LOL Emote stun |
-- **Modes:** 1P vs CPU (Easy / Normal / Hard) and 2 players on one keyboard
-- **Fighting system:** walk, jump, crouch, block (hold back; crouch-block lows), punch (THAPPAD), kick (LAAT), grab (PAKAD) + throw escape, specials, combos, air attacks, taunt, JUGAAD meter, combo damage scaling, hit-stop, screen shake, slow-mo KO
-- **Rules:** 100 HP, 60-second rounds, best of 3, TIME KHATAM decision, PERFECT
-- **3 stages:** Chai Tapri Night, Patang Terrace, Nukkad Junction (railway — trains shake the screen)
-- **Chaos events:** cow walks through and launches fighters 🐄, power cut, rain, kite "BO KATA", "Bhai ne bola" LAG and low-gravity moon fights
-- **Meme energy:** Hinglish combo callouts (DHISHUM! BHAUKAAL! JHAKAAS! KHATAM!), random meme pop-ups, "BRUH." freeze-frame when a super misses, confetti KO, meme captions on the win screen
-- **Meme Mode:** big heads + double speed
-- **Sound:** every sound and the looping desi beat are generated live with the Web Audio API (no copyrighted audio). Music + SFX toggles
-- **Mobile:** touch joystick + buttons, landscape with "rotate your phone" prompt, PWA (installable, works offline)
-- **Extras:** share-your-win card (WhatsApp / share sheet), local win leaderboard, unlockable secret boss
+## Hinglish 🇮🇳
 
-## Controls
-| | VS CPU (1 player) | 2P — Player 1 | 2P — Player 2 |
+**Kya naya hai v2 mein?**
+- Pura game **3D** (Three.js) — 2.5D side-view fighting, low-poly toon fighters (khud ke banaye, koi download kiya hua model nahi), outline + cel shading.
+- **3 naye 3D stages:** Chai Tapri Night (string lights, steam, street lamp), Patang Terrace (udti patang, kapde, water tank), Nukkad Junction (railway platform, train guzarti hai!).
+- **Dynamic camera:** dono fighters ko follow karta hai, super pe zoom-in, hit pe shake, K.O. pe slow-mo close-up.
+- **Effects:** hit sparks, shockwave, trails on specials, super cut-in (naam + portrait), screen flash, confetti, chaos events (gaai, power cut, baarish, patang, lag, chand pe dangal).
+- **Pro UI:** animated main menu (peeche CPU vs CPU live fight), 3D character previews, glowing gold buttons (ripple + press animation), health bar drain, combo counter, "ROUND 1 — FIGHT!", K.O. banner, pause menu, settings.
+- **Settings:** Graphics Auto/Low/Med/High (FPS 45 se neeche gaya toh auto quality kam), Sound, Music, **Meme SFX**, Vibration, FPS counter.
+- **Meme-style SFX:** bass boom, "bruh" voice blip, air horn, record scratch, sad trombone, "EMOTIONAL DAMAGE" pop — sab khud synth kiye hue (WebAudio). Koi asli meme clip / gaana / movie audio use nahi hua (copyright safe).
+- **Balance fix:** Streamer Sid ka super bug (7 mein se sirf 1 like lagta tha) fix. Ab NORMAL CPU vs CPU mein saare 9 regular fighters 45–55%, boss HEYY ANISH ~59% (pehle Sid 19%, ANISH 79%).
+- Purana 2D game `/classic/` pe abhi bhi khelne ko milta hai.
+
+**Kaise khelein:** Phone landscape mein ghumao. Left stick = chalo/jump/crouch, peeche = block. THAPPAD (punch), LAAT (kick), PAKAD (grab), JUGAAD (super, bar full hone pe), HAHA (taunt).
+**Secret boss HEYY ANISH:** CPU ko ek baar haraao, ya ??? tile ko 5 baar tap karo, ya select screen pe `ANISH` type karo.
+
+## English 🌍
+
+**What's new in v2**
+- Full **3D renderer** (Three.js, Vite build): 2.5D side-view plane, procedural low-poly toon fighters with ink outlines, 3 lit 3D stages with particles and stage hazards (passing train, cow, power cut, rain, kites).
+- **Cinematics:** camera that frames both fighters, punch-in + speed lines + cut-in on supers, hit-shake, slow-motion K.O. close-up, winner shot.
+- **Juice:** hit sparks, ground shockwaves, ribbon trails on specials and supers, screen flash, confetti, damage-drain health bars, combo counter, round intro, K.O. banner.
+- **Pro UI:** attract-mode main menu, select screen with 3D portraits + live 3D preview, gold-on-black brand (#e3b65a / #060608), ripple buttons, pause + settings.
+- **Settings:** quality Auto/Low/Med/High (auto drops a level when FPS stays under 45), SFX, music, Meme SFX, vibration, FPS overlay.
+- **Meme-style SFX** — all original WebAudio synth sounds made *in the style of* popular meme sounds. No real meme clips, songs or film audio are included.
+- **Balance:** fixed a bug where multi-hit supers (Sid's likes, Goblin's pans) shared one hit-tracker and only landed once; re-tuned damage. NORMAL CPU-vs-CPU over 1,080 seeded matches: regulars 45–55 %, boss ~59 %.
+- **PWA / offline** still works (service worker cache bumped to `nukkad-ko-v2-…`, precaches the build).
+- v1 kept playable at **/classic/**.
+
+### Controls
+| | Keyboard (vs CPU) | 2 Player | Touch |
 |---|---|---|---|
-| Move / jump / crouch | WASD or arrows | WASD | Arrows |
-| Block | hold back | hold back | hold back |
-| THAPPAD (punch) | J or Z | F | K / Num1 |
-| LAAT (kick) | K or X | G | L / Num2 |
-| PAKAD (grab) | I or C (or J+K) | H | O / Num3 |
-| JUGAAD (super, full bar) | L / Space / V | T | P / Num0 |
-| Taunt (+meter) | U / B | R | U / Num4 |
+| Move / jump / crouch | WASD or arrows | P1 WASD · P2 arrows | left stick |
+| Block | hold back | hold back | stick back |
+| THAPPAD (punch) | J / Z | F · K/Num1 | THAPPAD |
+| LAAT (kick) | K / X | G · L/Num2 | LAAT |
+| PAKAD (grab, J+K too) | I / C | H · O/Num3 | PAKAD |
+| JUGAAD (super) | L / Space | T · P/Num0 | JUGAAD |
+| Taunt | U | R · U/Num4 | HAHA |
 
-Specials: **→ + THAPPAD** rush · **→ + LAAT** flying kick · **↓ + LAAT** sweep (only a crouch-block stops it).
-Combos: **P,P,P** · **P,P,K** · **K,K** · **↓P, K** · grabbed? press PAKAD fast to escape.
-Pause **Esc / P** · Music **M** · SFX **N**. Secret boss: beat the CPU once (or tap the ??? tile 5 times, or type ANISH on the select screen).
+Specials: →+THAPPAD rush, →+LAAT flying kick, ↓+LAAT sweep. Combos: P,P,P · P,P,K · K,K · ↓P,K. Pause: Esc/P.
 
-## Setup — English
+### Develop
 ```bash
-git clone https://github.com/heyyanixx/nukkad-knockout.git
-cd nukkad-knockout
-npm install        # installs Vite (the only dependency)
-npm run dev        # open the local URL it prints
-npm test           # 14 automated tests (game logic + built site)
-npm run build      # production build into ./site
-npm run preview    # serve the build locally
+npm install
+npm run dev        # local dev server
+npm run build      # builds 3D game to site/ and classic 2D to site/classic/
+npm test           # 22 tests: game logic, balance, build checks
+npm run balance    # CPU vs CPU win-rate table
 ```
-Deploy: upload the `site/` folder to any static host (GitHub Pages, Netlify, Vercel, Cloudflare Pages). Paths are relative, so it works in a sub-folder too.
 
-## Setup — Hinglish
-1. Repo clone kar: `git clone https://github.com/heyyanixx/nukkad-knockout.git` aur `cd nukkad-knockout`
-2. `npm install` — bas Vite install hoga, aur kuch nahi
-3. `npm run dev` — jo link aaye (jaise http://localhost:5173) browser me khol, game chalu 🎮
-4. `npm test` — saare tests chalenge (game ke rules + build check)
-5. `npm run build` — final game `site/` folder me ban jayega. Ye folder kisi bhi free hosting pe daal de (GitHub Pages / Netlify) — online ho jayega
-6. Naya fighter add karna hai? `src/roster.js` me ek entry copy karke naam, colour, speed, super badal de
-
-## How it works (code map)
+### Project layout
 ```
-src/moves.js    frame data for every move (startup/active/recovery, damage, combos)
-src/roster.js   the 10 fighters (stats, looks, move names, super type)
-src/fighter.js  fighter state machine + physics (60 fps fixed step)
-src/game.js     rounds, timer, hit detection, blocking, damage, supers, projectiles, stage events
-src/ai.js       CPU brain with Easy / Normal / Hard profiles (reaction time, block, punish, combos)
-src/render.js   all drawing: procedural fighters (no sprites), stages, effects, HUD
-src/audio.js    Web Audio synth: SFX + generated desi beat
-src/input.js    keyboard maps + touch joystick/buttons
-src/main.js     screens, game loop, pause, results, share, PWA registration
-tools/balance.mjs  CPU vs CPU win-rate check for every pair
+index.html, src/main.js     screens, HUD, settings, loop, touch + keyboard
+src/game.js fighter.js moves.js ai.js roster.js   game logic (pure JS, unit-tested)
+src/r3d/world.js            Three.js renderer, camera director, quality levels
+src/r3d/fighterModel.js     procedural toon fighter rig + poses
+src/r3d/stages.js           the three 3D stages + chaos props
+src/r3d/fx3d.js             particles, trails, impacts, projectiles
+src/audio.js                WebAudio SFX, meme-style SFX, music (no audio files)
+classic/                    v1 2D game (kept playable)
+test/                       node --test suites
 ```
-The game simulation (`game.js`, `fighter.js`, `ai.js`) has no DOM code, so it runs in Node for tests.
 
-## Next update ideas
-- More fighters: Sigma Uncle, Delivery Bhaiya, Engineering Wala, Topper Kid, Pani Puri Bhaiya, Aunty Next Door
-- More stages: Gully cricket street, Hostel room, Wedding baraat
-- Online play with a friend (WebRTC peer-to-peer + tiny room-code server)
-- Gravity-flip event, arcade/story mode, sprite art pass
-
-## Credits
-Inspired by browser fighting games. **Original code & art** (everything is drawn with code). The reverse-engineering study of a similar game that inspired this is in [docs/ANALYSIS.md](docs/ANALYSIS.md); no code, art, sound or names were copied.
-
-MIT License © 2026 HEYYANIXX
+### Credits & licences
+- Code, characters, stages and sounds: original, by HEYYANIXX (built with Tab). MIT licence (see LICENSE).
+- [Three.js](https://threejs.org) — MIT.
+- Anton font — SIL Open Font License 1.1 (`public/fonts/OFL.txt`).
+- All characters are fictional parodies; not affiliated with any real person. CARRY MINTU is a labelled parody archetype. HEYY ANISH is the game's owner.

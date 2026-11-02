@@ -135,3 +135,52 @@ test('taunt builds meter; platform train and moon gravity reset between rounds',
   g.f[1].hp = 0; for (let i = 0; i < 400 && g.phase !== 'intro'; i++) g.step();
   assert.equal(WORLD.gravity, GRAVITY);
 });
+
+
+// ---------------- v2 additions ----------------
+import { balance } from '../tools/balance.mjs';
+import { MEME_SFX, MEME_ONLY } from '../src/audio.js';
+
+test('v2 balance: NORMAL CPU vs CPU — regulars 40-60 %, boss stronger but beatable', () => {
+  const r = balance(4);
+  for (const [id, rate] of Object.entries(r.rate)) {
+    if (id === 'anish') assert.ok(rate > 0.5 && rate < 0.75, `anish ${rate}`);
+    else assert.ok(rate >= 0.38 && rate <= 0.62, `${id} ${rate}`);
+  }
+});
+
+test('v2 regression: Streamer Sid likes + Loot Goblin pans each land several hits', () => {
+  for (const [id, min] of [['sid', 4], ['goblin', 2]]) {
+    const g = new Game({ p1: byId(id), p2: byId('auto'), seed: 5, events: false });
+    toFight(g);
+    const [a, b] = g.f; a.x = 300; b.x = 400; a.meter = 100;
+    g.step([press('s'), emptyInput()]);
+    let hits = 0; const od = g.applyDamage.bind(g); g.applyDamage = (...x) => { hits++; od(...x); };
+    for (let i = 0; i < 200; i++) g.step();
+    assert.ok(hits >= min, `${id} super hits ${hits}`);
+  }
+});
+
+test('v2 renderer hooks: hit / super / ko events are emitted for 3D effects', () => {
+  const g = new Game({ p1: byId('auto'), p2: byId('chaiwala'), seed: 3, events: false });
+  const seen = new Set(); g.onEvent = (t) => seen.add(t);
+  toFight(g);
+  const [a, b] = g.f; a.x = 400; b.x = 465;
+  g.step([press('p'), emptyInput()]); for (let i = 0; i < 15; i++) g.step();
+  a.meter = 100; a.force('idle'); g.step([press('s'), emptyInput()]); for (let i = 0; i < 120; i++) g.step();
+  b.hp = 1; b.force('idle'); a.force('idle'); a.attack = null; a.x = 400; b.x = 465;
+  g.step([press('p'), emptyInput()]); for (let i = 0; i < 20; i++) g.step();
+  for (const t of ['fight', 'hit', 'super', 'ko']) assert.ok(seen.has(t), t);
+});
+
+test('v2 content rules: no Free Fire / Garena names, parody label, only Anish as a real person', () => {
+  const text = JSON.stringify(ROSTER);
+  assert.doesNotMatch(text, /booyah|free ?fire|garena|gloo/i);
+  assert.ok(byId('mintu').parody, 'Carry Mintu stays a labelled parody');
+  assert.ok(byId('anish').secret, 'HEYY ANISH stays the secret boss');
+});
+
+test('v2 meme-style SFX: own synth sounds, toggleable', () => {
+  for (const n of ['boom', 'bruh', 'airhorn', 'scratch', 'trombone', 'emo']) assert.ok(MEME_SFX.includes(n), n);
+  assert.ok(MEME_ONLY.has('airhorn') && MEME_ONLY.has('boom'));
+});

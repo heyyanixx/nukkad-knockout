@@ -1,6 +1,11 @@
 // All sound is generated live with the Web Audio API: no audio files at all.
+// "Meme-style SFX" are our own synth sounds made in the *style* of internet meme sounds
+// (bass boom, bruh blip, air horn, record scratch, sad trombone). No real meme clips, songs or movie audio are used.
+export const MEME_ONLY = new Set(['airhorn', 'emo', 'boom', 'bonk', 'oof', 'scratch', 'trombone', 'riser']);
+export const MEME_SFX = ['boom', 'bonk', 'oof', 'airhorn', 'scratch', 'trombone', 'riser', 'emo', 'bruh'];
+
 export class Audio {
-  constructor() { this.ctx = null; this.sfxOn = true; this.musicOn = true; this.musicTimer = null; }
+  constructor() { this.ctx = null; this.sfxOn = true; this.musicOn = true; this.memeOn = true; this.musicTimer = null; this.log = []; this.offset = 0; }
 
   unlock() {
     if (!this.ctx) {
@@ -16,17 +21,18 @@ export class Audio {
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
   setSfx(on) { this.sfxOn = on; if (this.sfx) this.sfx.gain.value = on ? 1 : 0; }
+  setMeme(on) { this.memeOn = on; }
   setMusic(on) { this.musicOn = on; if (this.mus) this.mus.gain.value = on ? 0.32 : 0; }
 
   // --- building blocks ---
   tone(type, f0, f1, dur, vol = 0.3, when = 0, dest = this.sfx) {
-    const c = this.ctx, t = c.currentTime + when, o = c.createOscillator(), g = c.createGain();
+    const c = this.ctx, t = c.currentTime + when + this.offset, o = c.createOscillator(), g = c.createGain();
     o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02); return o;
   }
   noise(dur, vol = 0.3, ftype = 'bandpass', f0 = 1000, f1 = f0, q = 1, when = 0, dest = this.sfx) {
-    const c = this.ctx, t = c.currentTime + when, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    const c = this.ctx, t = c.currentTime + when + this.offset, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
     s.buffer = this.noiseBuf; f.type = ftype; f.Q.value = q; f.frequency.setValueAtTime(f0, t); if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t + dur);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random()); s.stop(t + dur + 0.02);
@@ -36,7 +42,7 @@ export class Audio {
     const F = { a: [800, 1200], o: [500, 900], e: [450, 2000], i: [300, 2300], u: [350, 800] }[vowel];
     const c = this.ctx; let t0 = when;
     for (const [freq, dur] of notes) {
-      const t = c.currentTime + t0, o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(freq, t); o.frequency.linearRampToValueAtTime(freq * 0.85, t + dur);
+      const t = c.currentTime + t0 + this.offset, o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(freq, t); o.frequency.linearRampToValueAtTime(freq * 0.85, t + dur);
       const mix = c.createGain(); mix.gain.value = 1;
       for (const ff of F) { const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = ff; bp.Q.value = 6; o.connect(bp); bp.connect(mix); }
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -44,8 +50,47 @@ export class Audio {
     }
   }
 
-  play(name) {
+  // simulation sound event -> base SFX + (optional) meme-style layer
+  event(name) {
+    if (MEME_ONLY.has(name)) { if (this.memeOn) this.play(name); return; }
+    this.play(name);
+    if (!this.memeOn) return;
+    const r = Math.random();
+    switch (name) {
+      case 'heavy': if (r < 0.55) this.play('boom'); else if (r < 0.75) this.play('bonk'); break;
+      case 'hit': if (r < 0.1) this.play('bonk'); else if (r < 0.16) this.play('oof'); break;
+      case 'ko': this.play('boom'); this.play('trombone', 0.55); break;
+      case 'bruh': this.play('scratch'); break;
+      case 'timeup': this.play('scratch'); break;
+      case 'super': this.play('riser'); break;
+      case 'win': this.play('airhorn', 0.2); break;
+      case 'fight': this.play('airhorn', 0.25); break;
+      case 'moo': if (r < 0.5) this.play('bruh'); break;
+      default: break;
+    }
+  }
+
+  // reverb-ish feedback delay used by the boom
+  echo(dest = this.sfx) {
+    if (this._echo) return this._echo;
+    const c = this.ctx, inp = c.createGain(), d = c.createDelay(1), fb = c.createGain(), lp = c.createBiquadFilter();
+    d.delayTime.value = 0.11; fb.gain.value = 0.38; lp.type = 'lowpass'; lp.frequency.value = 900;
+    inp.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(dest);
+    return (this._echo = inp);
+  }
+  // soft-clip distortion for the bass boom
+  shaper() {
+    if (this._shaper) return this._shaper;
+    const c = this.ctx, s = c.createWaveShaper(), n = 1024, curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const x = (i / n) * 2 - 1; curve[i] = Math.tanh(x * 3.2); }
+    s.curve = curve; s.connect(this.sfx); s.connect(this.echo());
+    return (this._shaper = s);
+  }
+
+  play(name, when = 0) {
     if (!this.ctx || !this.sfxOn) return;
+    this.log.push(name); if (this.log.length > 60) this.log.shift();
+    if (when) { const o = this.offset; this.offset = o + when; this.play(name); this.offset = o; return; }
     const T = this.tone.bind(this), N = this.noise.bind(this);
     switch (name) {
       case 'hit': T('sine', 160, 50, 0.12, 0.6); N(0.07, 0.4, 'highpass', 1800); break;
@@ -77,9 +122,62 @@ export class Audio {
       case 'timeup': T('square', 220, 220, 0.6, 0.15); T('square', 233, 233, 0.6, 0.15); break;
       case 'win': [523, 659, 784, 1047].forEach((f, i) => T('square', f, f, 0.18, 0.12, i * 0.12)); this.play('crowd'); break;
       case 'train': T('square', 330, 330, 0.7, 0.12); T('square', 392, 392, 0.7, 0.1); N(2.5, 0.35, 'lowpass', 900, 300, 1, 0.1); break;
+      // ---- meme-style SFX (original synth sounds, made in the style of popular meme sounds) ----
+      case 'boom': { // deep distorted bass hit
+        const sh = this.shaper();
+        T('sine', 95, 32, 1.1, 0.9, 0, sh); T('triangle', 190, 50, 0.35, 0.4, 0, sh); N(0.06, 0.5, 'lowpass', 3000, 300, 1, 0, sh);
+        break;
+      }
+      case 'bonk': T('sine', 720, 380, 0.09, 0.45); T('triangle', 1440, 700, 0.05, 0.2); N(0.02, 0.3, 'highpass', 3000); break;
+      case 'oof': this.voice([[180, 0.08], [120, 0.16]], 'u', 0, 0.45); break;
+      case 'airhorn': { // three detuned horn blasts: baa ba-baaaa
+        const blast = (t0, len) => { for (const f of [415, 420, 523, 528]) { const o = T('sawtooth', f, f * 0.98, len, 0.07, t0); } N(len, 0.06, 'bandpass', 1200, 1100, 3, t0); };
+        blast(0, 0.16); blast(0.2, 0.1); blast(0.33, 0.55);
+        break;
+      }
+      case 'scratch': { // record scratch: fast up/down filtered noise + pitch wiggle
+        N(0.12, 0.6, 'bandpass', 600, 3800, 6); N(0.14, 0.55, 'bandpass', 3800, 500, 6, 0.12); T('sawtooth', 300, 900, 0.1, 0.12); T('sawtooth', 900, 200, 0.14, 0.12, 0.11);
+        break;
+      }
+      case 'trombone': { // sad trombone: wah wah wah waaah
+        const notes = [[293.7, 0.3], [277.2, 0.3], [261.6, 0.3], [246.9, 0.9]];
+        let t0 = 0;
+        for (const [f, d] of notes) {
+          const c = this.ctx, t = c.currentTime + t0 + this.offset, o = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
+          o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t);
+          if (d > 0.5) { const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 6; lg.gain.value = 7; lfo.connect(lg); lg.connect(o.frequency); lfo.start(t); lfo.stop(t + d); o.frequency.linearRampToValueAtTime(f * 0.94, t + d); }
+          lp.type = 'lowpass'; lp.frequency.setValueAtTime(500, t); lp.frequency.linearRampToValueAtTime(1500, t + 0.08); lp.frequency.linearRampToValueAtTime(600, t + d);
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.04); g.gain.setValueAtTime(0.22, t + d - 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+          o.connect(lp); lp.connect(g); g.connect(this.sfx); o.start(t); o.stop(t + d + 0.02); t0 += d;
+        }
+        break;
+      }
+      case 'riser': N(0.7, 0.25, 'bandpass', 300, 6000, 4); T('sawtooth', 110, 880, 0.7, 0.08); break;
+      case 'emo': { // dramatic "dun dun DUN" sting for big damage (text pop is drawn by the game)
+        T('sawtooth', 98, 98, 0.18, 0.12); T('sawtooth', 92.5, 92.5, 0.18, 0.12, 0.2); T('sawtooth', 82.4, 82.4, 0.7, 0.16, 0.4); T('sine', 41, 41, 0.8, 0.5, 0.4);
+        break;
+      }
       case 'ui': T('square', 880, 880, 0.04, 0.08); break;
       case 'select': T('square', 660, 990, 0.08, 0.1); break;
     }
+  }
+
+  // Render a list of [seconds, soundName] events (+ optional music bed) offline to a WAV (used for the trailer video).
+  async renderOffline(events, seconds, { music = 'fight', meme = true } = {}) {
+    const rate = 44100, off = new OfflineAudioContext(1, Math.ceil(rate * seconds), rate);
+    const a = new Audio(); a.ctx = off; a.memeOn = meme; a.sfxOn = true;
+    a.master = off.createGain(); a.master.gain.value = 0.8; a.master.connect(off.destination);
+    a.sfx = off.createGain(); a.sfx.connect(a.master); a.mus = off.createGain(); a.mus.gain.value = 0.3; a.mus.connect(a.master);
+    const len = rate * 1.5; a.noiseBuf = off.createBuffer(1, len, rate); const d = a.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (music) { const step = 60 / 112 / 4; for (let i = 0, t = 0; t < seconds; i++, t += step) a.musicStep(i, t, music, step); }
+    for (const [t, name] of events) { a.offset = t; a.event(name); }
+    a.offset = 0;
+    const buf = await off.startRendering(), ch = buf.getChannelData(0);
+    const out = new DataView(new ArrayBuffer(44 + ch.length * 2)), wr = (o, s) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+    wr(0, 'RIFF'); out.setUint32(4, 36 + ch.length * 2, true); wr(8, 'WAVEfmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true);
+    out.setUint32(24, rate, true); out.setUint32(28, rate * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true); wr(36, 'data'); out.setUint32(40, ch.length * 2, true);
+    for (let i = 0; i < ch.length; i++) out.setInt16(44 + i * 2, Math.max(-1, Math.min(1, ch[i])) * 32767, true);
+    return new Uint8Array(out.buffer);
   }
 
   // --- original looping beat (Bhairav-ish scale, 104 BPM, dhol + tabla + bass) ---
@@ -91,18 +189,21 @@ export class Audio {
     const lead = [7, -1, 6, 5, 4, -1, 5, 4, 2, -1, 1, 2, 4, -1, 2, 1];
     let i = 0, next = c.currentTime + 0.05;
     const tick = () => {
-      while (next < c.currentTime + 0.15) {
-        const s = i % 16, bar = Math.floor(i / 16) % 8, w = next - c.currentTime;
-        if (s % 4 === 0 || s === 10) this.tone('sine', 110, 45, 0.22, 0.7, w, this.mus);           // dhol low
-        if (s === 4 || s === 12) this.noise(0.12, 0.35, 'bandpass', 900, 600, 2, w, this.mus);      // dhol slap
-        if (s % 2 === 1) this.tone('sine', 520 + (s % 4) * 60, 380, 0.07, 0.18, w, this.mus);        // tabla
-        this.noise(0.03, 0.06, 'highpass', 7000, 7000, 1, w, this.mus);                             // shaker
-        if (s % 4 === 0) this.tone('triangle', scale[bass[bar]] / 2, scale[bass[bar]] / 2, step * 3.5, 0.35, w, this.mus);
-        if (style === 'fight' && bar % 2 === 1 && lead[s] >= 0) this.tone('square', scale[lead[s]] * 2, scale[lead[s]] * 2, step * 0.9, 0.06, w, this.mus);
-        next += step; i++;
-      }
+      while (next < c.currentTime + 0.15) { this.musicStep(i, next - c.currentTime, style, step); next += step; i++; }
     };
     this.musicTimer = setInterval(tick, 40); tick();
+  }
+  musicStep(i, w, style, step) {
+    const scale = [130.8, 138.6, 164.8, 174.6, 196.0, 207.7, 246.9, 261.6];
+    const bass = [0, 0, 4, 0, 5, 4, 2, 1];
+    const lead = [7, -1, 6, 5, 4, -1, 5, 4, 2, -1, 1, 2, 4, -1, 2, 1];
+    const s = i % 16, bar = Math.floor(i / 16) % 8;
+    if (s % 4 === 0 || s === 10) this.tone('sine', 110, 45, 0.22, 0.7, w, this.mus);           // dhol low
+    if (s === 4 || s === 12) this.noise(0.12, 0.35, 'bandpass', 900, 600, 2, w, this.mus);      // dhol slap
+    if (s % 2 === 1) this.tone('sine', 520 + (s % 4) * 60, 380, 0.07, 0.18, w, this.mus);        // tabla
+    this.noise(0.03, 0.06, 'highpass', 7000, 7000, 1, w, this.mus);                             // shaker
+    if (s % 4 === 0) this.tone('triangle', scale[bass[bar]] / 2, scale[bass[bar]] / 2, step * 3.5, 0.35, w, this.mus);
+    if (style === 'fight' && bar % 2 === 1 && lead[s] >= 0) this.tone('square', scale[lead[s]] * 2, scale[lead[s]] * 2, step * 0.9, 0.06, w, this.mus);
   }
   stopMusic() { if (this.musicTimer) clearInterval(this.musicTimer); this.musicTimer = null; }
 }
